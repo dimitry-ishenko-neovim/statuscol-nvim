@@ -1,0 +1,12 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/luukvbaal/statuscol.nvim
+Upstream-Name: statuscol.nvim
+Upstream-Contact: Luuk van Baal <luukvbaal@gmail.com>
+
+Files: *
+Copyright: 2022-2023 Luuk van Baal <luukvbaal@gmail.com>
+License: MIT
+
+Files: debian/*
+Copyright: 2023 Dimitry Ishenko <dimitry.ishenko@gmail.com>
+License: GPL-3.0+
