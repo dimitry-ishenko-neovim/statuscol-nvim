@@ -1,5 +1,178 @@
-statuscol-nvim (0.0.1-1) UNRELEASED; urgency=medium
+statuscol-nvim (0.0.1-1) unstable; urgency=medium
 
-  * Initial release.
+  [ Luuk van Baal ]
+  * feat!: line number segment and config options
 
- -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Fri, 01 Dec 2023 19:58:19 -0500
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * refactor!: lua function segments, separator function, click actions to builtin
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat: support custom fold fillchars for fold actions
+  * refactor!: rename option to set 'statuscolumn' to setopt
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: check that sign text is not nil
+  * docs: update README.md
+  * fix: replace v:wrap with v:virtnum
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix! properly handle 'fillchars' in fold click handler
+  * feat: add "ft_ignore" config variable
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat: add builtin/custom fold column function
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: add missing ffidef.lua
+  * fix: avoid "attempt to redefine" error
+  * docs: update README.md
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix(builtin): apply CursorLineFold to foldfunc
+  * fix(builtin): restore CursorLineNr in foldfunc
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix(builtin): restore normal highlight with %* in foldfunc
+  * fix: use win_col_off instead of getwininfo()
+  * feat: use %! statusline item for setopt
+  * fix: only use statusline_winid for setopt
+  * cfg!: deprecate reeval config option
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix(builtin): restore missing fold action click function
+  * fix: use window local options in numberfunc
+  * fix: make sure win is not nil
+  * feat: replace "order" config with "segments"
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: init builtin cfg
+  * refactor: only store 'fillchars' elements we use in callargs
+  * fix: add workaround for dashboard option values
+  * fix: fcs renamed to fold in click handler
+  * fix: revert to retrieving option values dynamically
+  * fix: use window id of drawn window for option values
+  * docs: add builtin functions to README
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: handle default fillchars
+  * fix: make sure wrapped fold column is aligned
+  * perf: store option values and update once per window per redraw
+  * perf: ensure callargs and callargs.tick are not nil
+  * feat: add sign segment
+  * fix: account for sign without texthl
+  * perf(sign): reduce nested loops by storing sign segment in sign cache
+  * fix: avoid indexing sign that will not be placed
+  * perf(sign): reduce table resize / rehash
+  * Revert "perf(sign): reduce table resize / rehash"
+  * fix: display_tick not available on windows
+  * config: allow disabling builtin clickhandler with `false`
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat(cfg): clear 'statuscolumn' by 'buftype'
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: add missing GitSignsChange sign handler
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * Revert "fix: display_tick not available on windows"
+  * fix: check ft_ignore on WinEnter
+  * fix: store unplaced signs in cache
+  * fix: check ft_ignore on BufEnter
+  * fix: sign column highlights
+  * feat: add version check/error
+  * feat(builtin): support for 'signcolumn' == "number"
+  * fix: don't set 'signcolumn' if %s segment is used
+  * fix: don't set 'signcolumn' if %s segment is used regardless of order
+  * fix: search for literal %s in segment text
+  * fix: get sign click action when sign placed and 'scl' is set to number
+  * fix: update sign cache in click handler
+  * perf: go to next sign once when segment is found
+  * fix: don't assign signs to lnumfunc when 'scl' is not "number"
+  * docs(README):add sign segment and example config picture
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat: add signs.fillchar option
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat(cfg): add clickmod to set modifier for builtin clickhandlers
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * docs: update default click action table
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Philipp Bokatius ]
+  * docs: add missing function end in readme (#51)
+
+  [ Luuk van Baal ]
+  * fix: store sign segment info per window
+  * fix: adjust "number" 'signcolumn' for new signs per window
+  * fix: always set sign wtext and loop over sign text twice if not found
+  * fix: avoid nil sign text access
+  * fix: avoid unitialized callargs during startup
+  * refactor: breakout update_callargs to own function
+  * style: format
+  * fix: reset plugin state on setup()
+  * perf: avoid indexing vim.v unnecessarily
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat: support extmark signs in sign segments
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: reassign segments when 'signcolumn' is set
+  * fix: avoid handling cmdline click
+  * fix: don't try to place signs without text
+  * fix: remember sign segment and add sign without text to cache
+  * feat: add wrap config for sign segments
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * feat: apply CursorLineSign and CursorLineFold highlight groups
+  * feat: add "fillcharhl" config to specify highlight for "fillchar"
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: use gitsigns.nvim highlight groups to find clickhandler
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: check buf/filetype on BufWinEnter
+  * perf: cache type of segment.txt
+  * fix: use setlocal for ft_ignore
+  * docs: add deprecation warning for cfg.order
+  * fix: fillchar highlight priority
+  * fix: correctly increment notnamespace counter
+  * fix: store extmark signs by text and highlight group
+  * fix: correctly place signs by priority
+  * fix: avoid nil index
+  * fix: non-text extmark sign nil-index
+  * fix: non-text extmark sign nil-index
+  * feat: add fold.width and empty to args table
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Dimitry Ishenko ]
+  * Add Debian packaging
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sat, 02 Dec 2023 14:46:30 -0500
