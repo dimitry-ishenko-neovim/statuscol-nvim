@@ -2,6 +2,8 @@ lua << EOF
 local builtin = require("statuscol.builtin")
 require("statuscol").setup({
   relculright = true,
+  bt_ignore= { "help" },
+  ft_ignore= { "man"  },
   segments = {
     { sign = { name = { ".*" }  }, click = "v:lua.ScSa" },
     { text = { builtin.lnumfunc }, click = "v:lua.ScLa" },
