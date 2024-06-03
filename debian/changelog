@@ -1,3 +1,13 @@
+statuscol-nvim (2024.04.19-483b9a596-1) unstable; urgency=medium
+
+  * fix: avoid sign_hl_group nil index
+  * fix: avoid repeat foldclose or foldopen chars when `'wrap'` is set (#107)
+  * docs: fix typo (#110)
+  * chore: auto generated vimdoc
+  * fix: skip over legacy signs in extmark list
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sun, 02 Jun 2024 22:29:35 -0400
+
 statuscol-nvim (0.0.2-1) unstable; urgency=medium
 
   [ Luuk van Baal ]
