@@ -7,11 +7,6 @@ local S = vim.schedule
 local v = vim.v
 local contains = vim.tbl_contains
 local M = {}
-local idmap = {}
-local lastid = 1
-local sign_cache = {}
-local formatstr, formatargret, formatargs, formatargcount
-local signsegments, signsegmentcount
 local builtin, ffi, error, C, lnumfunc, callargs
 local cfg = {
   -- Builtin line number string options
@@ -23,84 +18,67 @@ local cfg = {
   clickmod = "c",
   clickhandlers = {},
 }
+local lastid = 1
+local nsmap = setmetatable({}, {
+  __index = function(nsmap, key)
+    local id = lastid
+    local nextid = C.next_namespace_id
+    local namemap = {}
+    for name, nsid in pairs(a.nvim_get_namespaces()) do
+      namemap[nsid] = name
+    end
+    while id < nextid do
+      nsmap[id] = namemap[id] or ""
+      id = id + 1
+    end
+    lastid = id - 1
+    return nsmap[key]
+  end,
+})
 
---- Update namespace id -> name map.
-local function update_nsidmap()
-  local id = lastid
-  local nextid = C.next_namespace_id
-  local namemap = {}
-  for name, nsid in pairs(a.nvim_get_namespaces()) do
-    namemap[nsid] = name
+local signsegments, signsegmentcount
+--- Assign a sign to a segment based on name, text or namespace.
+local function sign_assign_segment(s, win)
+  local segment = 1
+  while segment <= signsegmentcount do
+    local ss = signsegments[segment]
+    if ss.lnum and not ss.wins[win].sclnu then goto next end
+    if s.sign_name then -- legacy sign
+      for j = 1, ss.notnamecount do
+        if s.sign_name:find(ss.notname[j]) then goto next end
+      end
+      for j = 1, ss.namecount do
+        if s.sign_name:find(ss.name[j]) then goto found end
+      end
+    else -- extmark sign
+      for j = 1, ss.nottextcount do
+        if s.wtext:find(ss.nottext[j]) then goto next end
+      end
+      for j = 1, ss.notnamespacecount do
+        if s.ns:find(ss.notnamespace[j]) then goto next end
+      end
+      for j = 1, ss.textcount do
+        if s.wtext:find(ss.text[j]) then goto found end
+      end
+      for j = 1, ss.namespacecount do
+        if s.ns:find(ss.namespace[j]) then goto found end
+      end
+    end
+    ::next::
+    segment = segment + 1
   end
-  while id < nextid do
-    idmap[id] = namemap[id] or ""
-    id = id + 1
-  end
-  lastid = id - 1
+  ::found::
+  return segment <= signsegmentcount and segment
 end
 
---- Update sign cache and assign segment to defined legacy signs or placed extmark signs.
-local function update_sign_defined(win, ext, reassign)
-  local signs = ext or f.sign_getdefined()
-  for i = 1, #signs do
-    local s = ext and signs[i][4] or signs[i]
-    local name = s.name or s.sign_text
-    if s.sign_text or s.text then
-      if ext then
-        s.text = s.sign_text
-        if not idmap[s.ns_id] then update_nsidmap() end
-        s.ns = idmap[s.ns_id]
-        if not s.ns then goto nextsign end
-        if s.sign_hl_group then name = name..s.sign_hl_group end
-      end
-      s.wtext = s.text:gsub("%s", "")
-      s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
-      if not reassign and sign_cache[name] then
-        s.segment = sign_cache[name].segment
-        goto nextsign
-      end
-      for j = 1, signsegmentcount do
-        local ss = signsegments[j]
-        if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
-        if ext then -- extmarks: match by sign text or namespace
-          for k = 1, ss.nottextcount do
-            if s.wtext:find(ss.nottext[k]) then goto nextsegment end
-          end
-          for k = 1, ss.notnamespacecount do
-            if s.ns:find(ss.notnamespace[k]) then goto nextsegment end
-          end
-          for k = 1, ss.textcount do
-            if s.wtext:find(ss.text[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-          for k = 1, ss.namespacecount do
-            if s.ns:find(ss.namespace[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-        else -- legacy sign: match by sign name
-          for k = 1, ss.notnamecount do
-            if s.name:find(ss.notname[k]) then goto nextsegment end
-          end
-          for k = 1, ss.namecount do
-            if s.name:find(ss.name[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-        end
-        ::nextsegment::
-      end
-    end
-    ::nextsign::
-    if s.segment then
-      if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
-    end
-    if name then sign_cache[name] = s end
-  end
+local sign_cache = {}
+--- Update sign cache and assign segment to signs.
+local function sign_cache_add(win, s, name)
+  if not s.sign_name then s.ns = nsmap[s.ns_id] end
+  s.wtext = s.sign_text:gsub("%s", "")
+  s.segment = sign_assign_segment(s, win)
+  if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
+  sign_cache[name] = s
 end
 
 --- Store click args and fn.getmousepos() in table.
@@ -113,141 +91,133 @@ local function get_click_args(minwid, clicks, button, mods)
     mods = mods,
     mousepos = f.getmousepos(),
   }
-  -- Avoid handling cmdline click, may be removed in 0.9.1: https://github.com/neovim/neovim/pull/23163
-  if args.mousepos.winid == 0 then return end
+  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
+  -- When empty space is clicked try one cell to the left
+  args.text = text ~= " " and text or f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
   a.nvim_set_current_win(args.mousepos.winid)
   a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
   return args
 end
 
-local function call_click_func(name, hl, args)
-  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[hl]
-  if handler then S(function() handler(args) end) end
+local function call_click_func(name, args)
+  for pat, func in pairs(cfg.clickhandlers) do
+    local handler = cfg.clickhandlers[name] or name:match(pat) and func
+    if handler then
+      S(function() handler(args) end)
+      break
+    end
+  end
 end
 
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
-  local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   local fold = callargs[args.mousepos.winid].fold
-  local type = char == fold.open and "FoldOpen"
-      or char == fold.close and "FoldClose" or "FoldOther"
-  call_click_func(type, type, args)
+  local type = args.text == fold.open and "FoldOpen" or args.text == fold.close and "FoldClose" or "FoldOther"
+  call_click_func(type, args)
 end
 
 local function get_sign_action_inner(args)
-  local sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-  -- When empty space is clicked in the sign column, try one cell to the left
-  if sign == " " then
-    sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
-  end
-
-  for name, s in pairs(sign_cache) do
-    if s.wtext == sign then
-      call_click_func(s.ns or name, s.texthl, args)
-      return
+  local row = args.mousepos.line - 1
+  for _, s in ipairs(a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})) do
+    if s[4].sign_text and s[4].sign_text:gsub("%s", "") == args.text then
+      call_click_func(s[4].sign_name or nsmap[s[4].ns_id], args)
+      return true
     end
   end
-
-  update_sign_defined(args.mousepos.winid)
-  for name, s in pairs(sign_cache) do
-    if s.wtext == sign then
-      call_click_func(s.ns or name, s.texthl, args)
-      return
-    end
-  end
+  return false
 end
 
 --- Execute sign column click callback.
 local function get_sign_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
   get_sign_action_inner(args)
 end
 
 --- Execute line number click callback.
 local function get_lnum_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
   local cargs = callargs[args.mousepos.winid]
-  if lnumfunc and cargs.sclnu then
-    local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line})
-    if #placed[1].signs > 0 then
-      get_sign_action_inner(args)
-      return
-    end
-  end
-  call_click_func("Lnum", "Lnum", args)
+  if lnumfunc and cargs.sclnu and get_sign_action_inner(args) then return end
+  call_click_func("Lnum", args)
 end
 
---- Place (extmark) signs in sign segments.
-local function place_signs(win, signs, ext)
+--- Place signs with sign text in sign segments.
+local function place_signs(win, signs)
+  local lines = {}
   for i = 1, #signs do
-    local s = ext and signs[i][4] or signs[i]
-    local name = s.name or s.sign_text
-    if not name then goto nextsign end
-    if ext and s.sign_hl_group then name = name..s.sign_hl_group end
-    if not sign_cache[name] then update_sign_defined(win, ext and signs) end
+    local s = signs[i][4]
+    if not s.sign_text then goto nextsign end
+
+    local name = s.sign_name or s.sign_text
+    if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
+    if not s.sign_name then name = name..s.sign_hl_group end
+    if not sign_cache[name] then sign_cache_add(win, s, name) end
     local sign = sign_cache[name]
-    if not sign or not sign.segment then goto nextsign end
+    if not sign.segment then goto nextsign end
+
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
     local sss = wss.signs
-    local lnum = ext and signs[i][2] + 1 or s.lnum
-    local width = (sss[lnum] and #sss[lnum] or 0) + 1
-    if width > ss.maxwidth then
-      if not ext then
-        for j = 1, width - 1 do
-          if sss[lnum][j].priority and s.priority > sss[lnum][j].priority then
-            table.insert(sss[lnum], j, sign)
-            sss[lnum][width] = nil
-            goto nextsign
-          end
-        end
+    local lnum = signs[i][2] + 1
+
+    if ss.foldclosed then
+      if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
+      if lines[lnum] > 0 then
+        lnum = lines[lnum]
+        for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
       end
-      goto nextsign
     end
+
     if not sss[lnum] then sss[lnum] = {} end
-    if wss.width < width then wss.width = width end
-    sss[lnum][width] = sign
+    -- Insert by priority. Potentially remove when nvim_buf_get_extmarks() can return sorted list.
+    for j = 1, ss.maxwidth do
+      if not sss[lnum][j] or s.priority > sss[lnum][j].priority then
+        sss[lnum][ss.maxwidth] = nil
+        table.insert(sss[lnum], j, sign)
+        if wss.width < j then wss.width = j end
+        break
+      end
+    end
     ::nextsign::
   end
 end
 
+local opts = {}
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
-  local fcs = Ol.fcs:get()
-  local culopt = a.nvim_get_option_value("culopt", {win = win})
   local buf = a.nvim_win_get_buf(win)
   args.buf = buf
   args.tick = tick
-  args.nu = a.nvim_get_option_value("nu", {win = win})
-  args.rnu = a.nvim_get_option_value("rnu", {win = win})
-  args.cul = a.nvim_get_option_value("cul", {win = win}) and (culopt:find("nu") or culopt:find("bo"))
-  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", {win = win}):find("nu")
-  args.fold.sep = fcs.foldsep or "│"
-  args.fold.open = fcs.foldopen or "-"
-  args.fold.close = fcs.foldclose or "+"
+  opts.win = win
+  args.nu = a.nvim_get_option_value("nu", opts)
+  args.rnu = a.nvim_get_option_value("rnu", opts)
+  local culopt = a.nvim_get_option_value("culopt", opts)
+  args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))
+  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", opts):find("nu")
   args.fold.width = C.compute_foldcolumn(args.wp, 0)
+  if args.fold.width > 0 then
+    local fcs = a.nvim_win_call(args.win, function() return Ol.fcs:get() end)
+    args.fold.sep = fcs.foldsep or "│"
+    args.fold.open = fcs.foldopen or "-"
+    args.fold.close = fcs.foldclose or "+"
+  end
   args.empty = C.win_col_off(args.wp) == 0
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.
-    local extsigns = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
+    local signs = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
+        sign_cache = {}
         wss.sclnu = args.sclnu
-        update_sign_defined(win, nil, true)
-        update_sign_defined(win, extsigns, true)
       end
       wss.width = 0
       wss.signs = {}
     end
-    place_signs(win, extsigns, true)
-    place_signs(win, f.sign_getplaced(buf, {group = "*"})[1].signs, false)
+    place_signs(win, signs)
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
@@ -259,8 +229,9 @@ local function update_callargs(args, win, tick)
   end
 end
 
+local formatstr, formatargret, segments, segmentcount
 --- Return 'statuscolumn' option value (%! item).
-local function get_statuscol_string()
+M.get_statuscol_string = function()
   local win = g.statusline_winid
   local args = callargs[win]
   local tick = C.display_tick
@@ -285,18 +256,18 @@ local function get_statuscol_string()
     update_callargs(args, win, tick)
   end
 
-  for i = 1, formatargcount do
-    local fa = formatargs[i]
-    formatargret[i] = (fa.cond == true or fa.cond(args))
-      and (fa.textfunc and fa.text(args, fa) or fa.text) or ""
+  for i = 1, segmentcount do
+    local s = segments[i]
+    formatargret[i] = (s.cond == true or s.cond(args))
+      and (s.textfunc and s.text(args, s) or s.text) or ""
   end
 
   return formatstr:format(unpack(formatargret))
 end
 
 function M.setup(user)
-  if f.has("nvim-0.9") == 0 then
-    vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
+  if f.has("nvim-0.10") == 0 then
+    vim.notify("statuscol.nvim requires Neovim version >= 0.10", vim.log.levels.WARN)
     return
   end
 
@@ -306,10 +277,10 @@ function M.setup(user)
   C = ffi.C
   callargs = {}
   formatstr = ""
-  formatargs = {}
+  segments = {}
   signsegments = {}
   formatargret = {}
-  formatargcount = 0
+  segmentcount = 0
   signsegmentcount = 0
 
   cfg.clickhandlers = {
@@ -320,25 +291,13 @@ function M.setup(user)
     DapBreakpointRejected   = builtin.toggle_breakpoint,
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
-    DiagnosticSignError     = builtin.diagnostic_click,
-    DiagnosticSignHint      = builtin.diagnostic_click,
-    DiagnosticSignInfo      = builtin.diagnostic_click,
-    DiagnosticSignWarn      = builtin.diagnostic_click,
-    GitSignsTopdelete       = builtin.gitsigns_click,
-    GitSignsUntracked       = builtin.gitsigns_click,
-    GitSignsAdd             = builtin.gitsigns_click,
-    GitSignsChange          = builtin.gitsigns_click,
-    GitSignsChangedelete    = builtin.gitsigns_click,
-    GitSignsDelete          = builtin.gitsigns_click,
-    gitsigns_extmark_signs_ = builtin.gitsigns_click,
+    ["diagnostic/signs"]    = builtin.diagnostic_click,
+    gitsigns                = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
-  if cfg.order then
-    vim.notify('The "order" configuration key is deprecated. Refer to the "segments" key in |statuscol-configuration| instead.', vim.log.levels.WARN)
-  end
   builtin.init(cfg)
 
-  local segments = cfg.segments or {
+  local cfgsegments = cfg.segments or {
     -- Default segments (fold -> sign -> line number -> separator)
     {text = {"%C"}, click = "v:lua.ScFa"},
     {text = {"%s"}, click = "v:lua.ScSa"},
@@ -353,8 +312,8 @@ function M.setup(user)
   -- "segments" here and convert it to a format string. Only the variable
   -- elements are evaluated each redraw.
   local setscl
-  for i = 1, #segments do
-    local segment = segments[i]
+  for i = 1, #cfgsegments do
+    local segment = cfgsegments[i]
     if segment.text and contains(segment.text, builtin.lnumfunc) then
       lnumfunc = true
       segment.sign = segment.sign or {name = {".*"}, text = {".*"}}
@@ -375,6 +334,7 @@ function M.setup(user)
       ss.maxwidth = ss.maxwidth or 1
       ss.colwidth = ss.colwidth or 2
       ss.fillchar = ss.fillchar or " "
+      ss.foldclosed = ss.foldclosed or false
       if ss.fillcharhl then ss.fillcharhl = "%#"..ss.fillcharhl.."#" end
       if setscl ~= false then setscl = true end
       if not segment.text then segment.text = {builtin.signfunc} end
@@ -388,12 +348,12 @@ function M.setup(user)
         local text = segment.text[j]
         if type(text) == "string" then
           if text:find("%%s") then setscl = false end
-          text = text:gsub("%%", "%%%%")
+          if type(condition) == "boolean" then text = text:gsub("%%", "%%%%") end
         end
         if type(text) == "function" or type(condition) == "function" then
           formatstr = formatstr.."%s"
-          formatargcount = formatargcount + 1
-          formatargs[formatargcount] = {
+          segmentcount = segmentcount + 1
+          segments[segmentcount] = {
             text = text,
             textfunc = type(text) == "function",
             cond = condition,
@@ -409,7 +369,7 @@ function M.setup(user)
   end
   if setscl and o.scl ~= "number" then o.scl = "no" end
   -- For each sign segment, store the name patterns from other sign segments.
-  -- This list is used in update_sign_defined() to make sure that signs that
+  -- This list is used in sign_assign_segment() to make sure that signs that
   -- have a dedicated segment do not get placed in a wildcard(".*") segment.
   if signsegmentcount > 0 then
     for i = 1, signsegmentcount do
@@ -454,8 +414,7 @@ function M.setup(user)
   local id = a.nvim_create_augroup("StatusCol", {})
 
   if cfg.setopt then
-    _G.StatusCol = get_statuscol_string
-    o.statuscolumn = "%!v:lua.StatusCol()"
+    o.statuscolumn = "%!v:lua.require('statuscol').get_statuscol_string()"
     a.nvim_create_autocmd("WinClosed", {
       group = id,
       callback = function(args)
@@ -499,5 +458,8 @@ function M.setup(user)
     })
   end
 end
+
+-- Restored session may set 'statuscolumn', requiring the plugin without calling setup.
+if not callargs then M.setup() end
 
 return M
