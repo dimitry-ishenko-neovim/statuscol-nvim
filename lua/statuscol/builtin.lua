@@ -7,9 +7,9 @@ local foldmarker, thou, culright, ffi, C, clickmod
 local M = {}
 
 --- Return line number in configured format.
-function M.lnumfunc(args, fa)
-  if args.sclnu and fa.sign and fa.sign.wins[args.win].signs[args.lnum] then
-    return "%="..M.signfunc(args, fa)
+function M.lnumfunc(args, segment)
+  if args.sclnu and segment.sign and segment.sign.wins[args.win].signs[args.lnum] then
+    return "%="..M.signfunc(args, segment)
   end
   if not args.rnu and not args.nu then return "" end
   if args.virtnum ~= 0 then return "%=" end
@@ -37,9 +37,7 @@ function M.foldfunc(args)
   local string = args.cul and args.relnum == 0 and "%#CursorLineFold#" or "%#FoldColumn#"
   local level = foldinfo.level
 
-  if level == 0 then
-    return string..(" "):rep(width).."%*"
-  end
+  if level == 0 then return string..(" "):rep(width).."%*" end
 
   local closed = foldinfo.lines > 0
   local first_level = level - width - (closed and 1 or 0) + 1
@@ -64,18 +62,20 @@ function M.foldfunc(args)
 end
 
 --- Return sign column in configured format.
-function M.signfunc(args, formatarg)
-  local ss = formatarg.sign
+function M.signfunc(args, segment)
+  local ss = segment.sign
   local wss = ss.wins[args.win]
   if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
   local sss = wss.signs[args.lnum]
   local nonhl = ss.fillcharhl or (args.cul and args.relnum == 0 and "%#CursorLineSign#") or "%#SignColumn#"
+  if type(ss.auto) == "string" and wss.padwidth == 0 then return nonhl..ss.auto.."%*" end
   if not sss then return nonhl..wss.empty.."%*" end
   local text = ""
   local signcount = #sss
   for i = 1, signcount do
     local s = sss[i]
-    text = text.."%#"..s.texthl.."#"..s.text.."%*"
+    local hl_group = args.relnum == 0 and s.cursorline_hl_group or s.sign_hl_group
+    text = text.."%#"..hl_group.."#"..s.sign_text.."%*"
   end
   local pad = wss.padwidth - signcount
   if pad > 0 then
@@ -89,7 +89,7 @@ function M.not_empty(args)
   return not args.empty
 end
 
---- Create new fold by middle-cliking the range.
+--- Create new fold by middle-clicking the range.
 local function create_fold(args)
   if foldmarker then
     c("norm! zf"..foldmarker.."G")

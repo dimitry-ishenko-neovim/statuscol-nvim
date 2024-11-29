@@ -1,7 +1,7 @@
 # statuscol.nvim
 
 Status column plugin that provides a configurable ['statuscolumn'](https://neovim.io/doc/user/options.html#'statuscolumn') and click handlers.
-Requires Neovim >= 0.9. Recommended to use 0.10 branch with Neovim 0.10 nightly builds.
+Requires Neovim >= 0.10.
 
 <!-- panvimdoc-ignore-start -->
 
@@ -23,7 +23,7 @@ For example with lazy.nvim:
       -- segments = {
       --   { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
       --   {
-      --     sign = { name = { "Diagnostic" }, maxwidth = 2, auto = true },
+      --     sign = { namespace = { "diagnostic/signs" }, maxwidth = 2, auto = true },
       --     click = "v:lua.ScSa"
       --   },
       --   { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
@@ -60,8 +60,8 @@ local cfg = {
   thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Builtin 'statuscolumn' options
-  ft_ignore = nil,       -- lua table with 'filetype' values for which 'statuscolumn' will be unset
-  bt_ignore = nil,       -- lua table with 'buftype' values for which 'statuscolumn' will be unset
+  ft_ignore = nil,       -- Lua table with 'filetype' values for which 'statuscolumn' will be unset
+  bt_ignore = nil,       -- Lua table with 'buftype' values for which 'statuscolumn' will be unset
   -- Default segments (fold -> sign -> line number + separator), explained below
   segments = {
     { text = { "%C" }, click = "v:lua.ScFa" },
@@ -74,7 +74,7 @@ local cfg = {
   },
   clickmod = "c",         -- modifier used for certain actions in the builtin clickhandlers:
                           -- "a" for Alt, "c" for Ctrl and "m" for Meta.
-  clickhandlers = {       -- builtin click handlers
+  clickhandlers = {       -- builtin click handlers, keys are pattern matched
     Lnum                    = builtin.lnum_click,
     FoldClose               = builtin.foldclose_click,
     FoldOpen                = builtin.foldopen_click,
@@ -82,17 +82,8 @@ local cfg = {
     DapBreakpointRejected   = builtin.toggle_breakpoint,
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
-    DiagnosticSignError     = builtin.diagnostic_click,
-    DiagnosticSignHint      = builtin.diagnostic_click,
-    DiagnosticSignInfo      = builtin.diagnostic_click,
-    DiagnosticSignWarn      = builtin.diagnostic_click,
-    GitSignsTopdelete       = builtin.gitsigns_click,
-    GitSignsUntracked       = builtin.gitsigns_click,
-    GitSignsAdd             = builtin.gitsigns_click,
-    GitSignsChange          = builtin.gitsigns_click,
-    GitSignsChangedelete    = builtin.gitsigns_click,
-    GitSignsDelete          = builtin.gitsigns_click,
-    gitsigns_extmark_signs_ = builtin.gitsigns_click,
+    ["diagnostic/signs"]    = builtin.diagnostic_click,
+    gitsigns                = builtin.gitsigns_click,
   },
 }
 ```
@@ -110,20 +101,21 @@ Each segment can contain the following elements:
   condition = { true },  -- table of booleans or functions returning a boolean
   sign = {               -- table of fields that configure a sign segment
     -- at least one of "name", "text", and "namespace" is required
-    -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
+    -- legacy signs are matched against the defined sign name e.g. "DapBreakpoint"
     -- extmark signs can be matched against either the namespace or the sign text itself
-    name = { ".*" },     -- table of lua patterns to match the sign name against
-    text = { ".*" },     -- table of lua patterns to match the extmark sign text against
-    namespace = { ".*" },-- table of lua patterns to match the extmark sign namespace against
+    name = { ".*" },     -- table of Lua patterns to match the legacy sign name against
+    text = { ".*" },     -- table of Lua patterns to match the extmark sign text against
+    namespace = { ".*" },-- table of Lua patterns to match the extmark sign namespace against
     -- below values list the default when omitted:
     maxwidth = 1,        -- maximum number of signs that will be displayed in this segment
     colwidth = 2,        -- number of display cells per sign in this segment
-    auto = false,        -- when true, the segment will not be drawn if no signs matching
-                         -- the pattern are currently placed in the buffer.
+    auto = false,        -- boolean or string indicating what will be drawn when no signs
+                         -- matching the pattern are currently placed in the buffer.
     wrap = false,        -- when true, signs in this segment will also be drawn on the
                          -- virtual or wrapped part of a line (when v:virtnum != 0).
     fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
     fillcharhl = nil,    -- highlight group used for fillchar (SignColumn/CursorLineSign if omitted)
+    foldclosed = false,  -- when true, show signs from lines in a closed fold on the first line
   }
 }
 ```
@@ -164,15 +156,15 @@ require("statuscol").setup({
   segments = {
     {
       text = {
-        " ",               -- whitespace padding
-        function(args)     -- custom line number highlight function
+        " ",                -- whitespace padding
+        function(args)      -- custom line number highlight function
           return ((args.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=").."%l"
         end,
-        " ",               -- whitespace padding
+        " ",                -- whitespace padding
       },
       condition = {
-        true,              -- always shown
-        function(args)     -- shown only for the current window
+        true,               -- always shown
+        function(args)      -- shown only for the current window
           return vim.api.nvim_get_current_win() == args.win
         end,
         builtin.not_empty,  -- only shown when the rest of the statuscolumn is not empty
@@ -204,7 +196,7 @@ Feature requests/additions for the builtin providers are welcome if they can rea
 ### Custom click actions
 
 Custom sign/click action pairs can be passed through the `clickhandlers` table.
-Each element is the name of a sign, or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
+Each element is the name or pattern matching a sign (namespace), or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
 To modify the default actions, pass a table with the actions you want to overwrite to the `setup()` function:
 
 ```lua
@@ -250,11 +242,11 @@ Below follows a list of builtin click actions.
 |FoldClose/Other|Right||Delete fold|
 |FoldClose/Other|Right|<kbd>clickmod</kbd>|Delete fold recursively|
 |Fold*|Middle||Create fold in range(click twice)|
-|Diagnostic*|Left||Open diagnostic float|
-|Diagnostic*|Middle||Select available code action|
-|GitSigns*/gitsigns_extmark_signs_|Left||Preview hunk|
-|GitSigns*/gitsigns_extmark_signs_|Middle||Reset hunk|
-|GitSigns*/gitsigns_extmark_signs_|Right||Stage hunk|
+|diagnostic/signs|Left||Open diagnostic float|
+|diagnostic/signs|Middle||Select available code action|
+|gitsigns|Left||Preview hunk|
+|gitsigns|Middle||Reset hunk|
+|gitsigns|Right||Stage hunk|
 
 Optional dependencies:
 
