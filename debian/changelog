@@ -1,3 +1,80 @@
+statuscol-nvim (2025.01.10-1) unstable; urgency=medium
+
+  [ Luuk van Baal ]
+  * fix: use window context to check fold status
+  * fix: check 'file/buftype' for already open windows
+  * feat: pad builtin.lnumfunc with 'numberwidth'
+
+  [ Dimitry Ishenko ]
+  * Merge tag 'v2024.11.07-8822f76e1'
+  * Merge remote-tracking branch 'origin/main' into upstream
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * docs: pattern match clickhandlers keys
+
+  [ usr ]
+  * feat: pattern match clickhandler keys
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * feat: default string for empty auto sign segment
+  * fix: check two cells in fold clickhandler
+  * fix: ensure 'statuscolumn' requires the plugin
+
+  [ Anton Rybianov ]
+  * fix: use cursorline_hl_group from sign (#133)
+
+  [ Luuk van Baal ]
+  * fix: only escape % when used in format string
+  * fix: match pattern for click handlers
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: use less specific gitsigns namespace
+
+  [ Lopy ]
+  * fix: use window-local 'fillchars' for 'foldcolumn' (#121)
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * docs: fix typo
+
+  [ Yi Ming ]
+  * fix: avoid repeat foldclose or foldopen chars when `'wrap'` is set
+    (#107)
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * feat: add foldclosed option for sign segments
+  * refactor: rename formatargs to segments
+  * refactor: fetch signs for 'signcolumn' "number" only once
+  * refactor: stop caching non-text legacy signs
+  * fix: sort signs by priority
+  * fix: avoid sign_hl_group nil index
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: match new diagnostic sign namespace to *diagnostic/signs
+  * refactor: clear sign cache at sclnu call site
+  * style: rename and invert reassign argument
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: avoid nil index with numhl sign
+  * docs: fix typos
+  * refactor!: fetch all signs with nvim_buf_get_extmarks()
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Fri, 28 Feb 2025 21:45:50 -0500
+
 statuscol-nvim (2024.04.19-483b9a596-1) unstable; urgency=medium
 
   * fix: avoid sign_hl_group nil index
