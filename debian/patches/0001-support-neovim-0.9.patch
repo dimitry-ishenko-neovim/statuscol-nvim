@@ -1,0 +1,13 @@
+--- statuscol-nvim-2025.01.10.orig/lua/statuscol.lua
++++ statuscol-nvim-2025.01.10/lua/statuscol.lua
+@@ -272,8 +272,8 @@ M.get_statuscol_string = function()
+ end
+ 
+ function M.setup(user)
+-  if f.has("nvim-0.10") == 0 then
+-    vim.notify("statuscol.nvim requires Neovim version >= 0.10", vim.log.levels.WARN)
++  if f.has("nvim-0.9") == 0 then
++    vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
+     return
+   end
+ 
