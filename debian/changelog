@@ -1,3 +1,10 @@
+statuscol-nvim (2025.01.10-2) unstable; urgency=medium
+
+  * Not using gbp.conf
+  * Support neovim 0.9
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sat, 01 Mar 2025 23:07:21 -0500
+
 statuscol-nvim (2025.01.10-1) unstable; urgency=medium
 
   [ Luuk van Baal ]
