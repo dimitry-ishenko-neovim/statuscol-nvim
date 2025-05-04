@@ -1,3 +1,10 @@
+statuscol-nvim (2024.04.28-1) unstable; urgency=medium
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sun, 04 May 2025 14:30:52 -0400
+
 statuscol-nvim (2024.04.19-483b9a596-1) unstable; urgency=medium
 
   * fix: avoid sign_hl_group nil index
