@@ -1,3 +1,92 @@
+statuscol-nvim (2025.06.02-1) unstable; urgency=medium
+
+  [ Dimitry Ishenko ]
+  * statuscol.lua: update
+  * statuscol.vim => statuscol.lua
+  * Remove gbp.conf
+  * d/copyright: simplify
+  * d/control: compat level 13
+  * Merge tag 'v2025.06.02'
+
+  [ Luuk van Baal ]
+  * fix: don't setopt vim._extui windows
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * docs: update README.md
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: match new diagnostic sign namespace
+  * refactor!: avoid nvim_win_call() by using stl-%{
+  * fix: use window context to check fold status
+  * fix: check 'file/buftype' for already open windows
+  * feat: pad builtin.lnumfunc with 'numberwidth'
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * docs: pattern match clickhandlers keys
+
+  [ usr ]
+  * feat: pattern match clickhandler keys
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * feat: default string for empty auto sign segment
+  * fix: check two cells in fold clickhandler
+  * fix: ensure 'statuscolumn' requires the plugin
+
+  [ Anton Rybianov ]
+  * fix: use cursorline_hl_group from sign (#133)
+
+  [ Luuk van Baal ]
+  * fix: only escape % when used in format string
+  * fix: match pattern for click handlers
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: use less specific gitsigns namespace
+
+  [ Lopy ]
+  * fix: use window-local 'fillchars' for 'foldcolumn' (#121)
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * docs: fix typo
+
+  [ Yi Ming ]
+  * fix: avoid repeat foldclose or foldopen chars when `'wrap'` is set
+    (#107)
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+
+  [ Luuk van Baal ]
+  * feat: add foldclosed option for sign segments
+  * refactor: rename formatargs to segments
+  * refactor: fetch signs for 'signcolumn' "number" only once
+  * refactor: stop caching non-text legacy signs
+  * fix: sort signs by priority
+  * fix: avoid sign_hl_group nil index
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: match new diagnostic sign namespace to *diagnostic/signs
+  * refactor: clear sign cache at sclnu call site
+  * style: rename and invert reassign argument
+
+  [ github-actions[bot] ]
+  * chore: auto generated vimdoc
+  * fix: avoid nil index with numhl sign
+  * docs: fix typos
+  * refactor!: fetch all signs with nvim_buf_get_extmarks()
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Fri, 04 Jul 2025 15:55:39 -0400
+
 statuscol-nvim (2024.04.28-1) unstable; urgency=medium
 
   [ github-actions[bot] ]
