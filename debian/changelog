@@ -1,3 +1,9 @@
+statuscol-nvim (2025.06.02-2) unstable; urgency=medium
+
+  * statuscol.lua: remove extra space
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Fri, 04 Jul 2025 16:24:23 -0400
+
 statuscol-nvim (2025.06.02-1) unstable; urgency=medium
 
   [ Dimitry Ishenko ]
