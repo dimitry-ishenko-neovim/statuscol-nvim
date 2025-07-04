@@ -3,9 +3,9 @@ Section: editors
 Priority: optional
 Maintainer: Dimitry Ishenko <dimitry.ishenko@gmail.com>
 Build-Depends:
- debhelper-compat (= 12),
- dh-vim-addon
-Standards-Version: 4.6.0
+ debhelper-compat (= 13),
+ dh-vim-addon,
+Standards-Version: 4.6.2
 Homepage: https://github.com/luukvbaal/statuscol.nvim
 Vcs-Browser: https://github.com/dimitry-ishenko-vim/statuscol-nvim
 Vcs-Git: https://github.com/dimitry-ishenko-vim/statuscol-nvim.git
@@ -13,7 +13,9 @@ Rules-Requires-Root: no
 
 Package: statuscol-nvim
 Architecture: all
-Depends: ${misc:Depends}, neovim (>= 0.9)
+Depends:
+ ${misc:Depends},
+ neovim (>= 0.10),
 Description: Status column plugin
  Status column plugin that provides a configurable 'statuscolumn' and click
  handlers.
