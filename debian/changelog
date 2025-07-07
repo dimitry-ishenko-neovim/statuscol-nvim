@@ -1,3 +1,10 @@
+statuscol-nvim (2025.06.02-3) unstable; urgency=medium
+
+  * statuscol.lua: ignore oil windows
+  * statuscol.lua: show all signs in the first column
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Mon, 07 Jul 2025 14:28:08 -0400
+
 statuscol-nvim (2025.06.02-2) unstable; urgency=medium
 
   * statuscol.lua: remove extra space
