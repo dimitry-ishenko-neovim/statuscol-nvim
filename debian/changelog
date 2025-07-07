@@ -1,3 +1,9 @@
+statuscol-nvim (2025.06.02-4) unstable; urgency=medium
+
+  * statuscol.lua: ignore terminal buffers
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Mon, 07 Jul 2025 16:27:00 -0400
+
 statuscol-nvim (2025.06.02-3) unstable; urgency=medium
 
   * statuscol.lua: ignore oil windows
