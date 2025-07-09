@@ -1,3 +1,9 @@
+statuscol-nvim (1:0.0.1-40-gc461-1) unstable; urgency=medium
+
+  * Change versioning scheme.
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Wed, 09 Jul 2025 14:30:36 -0400
+
 statuscol-nvim (2025.06.02-4) unstable; urgency=medium
 
   * statuscol.lua: ignore terminal buffers
