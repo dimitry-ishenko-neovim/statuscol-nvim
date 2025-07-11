@@ -1,3 +1,9 @@
+statuscol-nvim (1:0.0.1-40-gc461-2) unstable; urgency=medium
+
+  * statuscol.lua: don't ignore oil windows
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Fri, 11 Jul 2025 15:03:43 -0400
+
 statuscol-nvim (1:0.0.1-40-gc461-1) unstable; urgency=medium
 
   * Change versioning scheme.
